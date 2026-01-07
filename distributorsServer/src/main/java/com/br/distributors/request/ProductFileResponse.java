@@ -5,7 +5,7 @@ import java.util.List;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-public class ProductFile {
+public class ProductFileResponse {
 
 	@Schema(description = "Tipo do header (sempre 'H' no arquivo de produtos).")
 	public String headerType;
@@ -20,5 +20,26 @@ public class ProductFile {
 	public List<String> identifiers;
 
 	@Schema(description = "Lista de produtos (registros 'V').")
-	public List<Product> products;
+	public List<ProductResponse> products;
+
+	public String getHeaderType() {
+		return headerType;
+	}
+
+	public String getLayout() {
+		return layout;
+	}
+
+	public LocalDate getGenerationDate() {
+		return generationDate;
+	}
+
+	public List<String> getIdentifiers() {
+		return identifiers;
+	}
+
+	public List<ProductResponse> getProducts() {
+		return products;
+	}
+
 }

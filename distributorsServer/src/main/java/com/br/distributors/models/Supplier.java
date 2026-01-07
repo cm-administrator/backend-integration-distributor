@@ -6,12 +6,13 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 @Entity
-@Table(name = "tbSupplier", uniqueConstraints = @UniqueConstraint(name = "UK_tbSupplier_identifier", columnNames = "identifier"))
-@Schema(name = "Supplier", description = "Fornecedor (baseado nos campos existentes em Product)")
+@Table(name = "tbSupplier", uniqueConstraints = @UniqueConstraint(name = "UK_tbSupplier_identifier", columnNames = "identifier"), indexes = @Index(columnList = "identifier", name = "IDX_SUPPLIER_IDENTIFIER"))
+@Schema(name = "Supplier", description = "Fornecedor (baseado nos campos existentes em ProductResponse)")
 public class Supplier {
 
 	@Id
@@ -29,6 +30,11 @@ public class Supplier {
 
 	public Supplier() {
 
+	}
+
+	public Supplier(String identifier, String legalName) {
+		this.identifier = identifier;
+		this.legalName = legalName;
 	}
 
 	public String getIdentifier() {

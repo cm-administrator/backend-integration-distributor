@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.br.distributors.request.StockResponse;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -29,7 +31,7 @@ public class Stock {
 	private Long id;
 
 	@ManyToOne(fetch = FetchType.LAZY, optional = true)
-	@JoinColumn(name = "productCode", referencedColumnName = "barcode", foreignKey = @ForeignKey(name = "FK_FROM_TBPRODUCT_FOR_TBSTOCK"))
+	@JoinColumn(name = "fk_Id_Product", referencedColumnName = "id", foreignKey = @ForeignKey(name = "FK_FROM_TBPRODUCT_FOR_TBSTOCK"))
 	@Schema(description = "Produto (por código de barras)")
 	private Product product;
 
@@ -42,7 +44,7 @@ public class Stock {
 	@JoinColumn(name = "fk_Id_Distributor", referencedColumnName = "id", nullable = false, foreignKey = @ForeignKey(name = "FK_FROM_TBDISTRIBUTOR_FOR_TBSTOCK"))
 	private Distributor distributor;
 
-	@Schema(description = "Stock quantity.")
+	@Schema(description = "StockResponse quantity.")
 	@Column
 	private BigDecimal quantity;
 
@@ -78,6 +80,17 @@ public class Stock {
 	}
 
 	public Stock() {
+
+	}
+
+	public Stock(StockResponse response, Product product, Distributor distributor, LocalDate stockDate) {
+		this.product = product;
+		this.distributor = distributor;
+		this.recordType = response.getRecordType();
+		this.quantity = response.getQuantity();
+		this.batchCode = response.getBatchCode();
+		this.batchExpirationDate = response.getBatchExpirationDate();
+		this.stockDate = stockDate;
 
 	}
 

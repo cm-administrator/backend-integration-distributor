@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "tbDistributor", uniqueConstraints = @UniqueConstraint(name = "UK_tbDistributor_identifier", columnNames = "identifier"))
+@Table(name = "tbDistributor", uniqueConstraints = @UniqueConstraint(name = "UK_tbDistributor_identifier", columnNames = "identifier"), indexes = @Index(columnList = "identifier", name = "IDX_DISTRIBUTOR_IDENTIFIER"))
 @Schema(name = "Distributor", description = "Distribuidor / agente distribuidor (baseado nos campos distributorIdentifier/distributorAgentIdentifier)")
 public class Distributor {
 
@@ -23,6 +23,11 @@ public class Distributor {
 
 	public Distributor() {
 
+	}
+
+	public Distributor(String identifier, String legalName) {
+		this.identifier = identifier;
+		this.legalName = legalName;
 	}
 
 	public String getIdentifier() {

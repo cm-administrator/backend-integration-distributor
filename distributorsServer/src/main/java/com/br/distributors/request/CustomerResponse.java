@@ -10,14 +10,14 @@ public class CustomerResponse {
 	public String distributorAgentIdentifier;
 
 	@Schema(description = "CustomerResponse identification (X(18) - CNPJ/CPF without mask).")
-	public String customerIdentifier;
+	public String identifier;
 
 	@Schema(description = "CustomerResponse legal name (X(40)).")
 	public String legalName;
 
 	@Schema(description = "Address (street) (X(40)).")
 	public String address;
-
+ 
 	@Schema(description = "Neighborhood (X(30)).")
 	public String neighborhood;
 
@@ -36,9 +36,6 @@ public class CustomerResponse {
 	@Schema(description = "Phone numbers (X(40)).")
 	public String phoneNumbers;
 
-	@Schema(description = "CustomerResponse CNPJ/CPF (X(18)).")
-	public String customerIdentifier2;
-
 	@Schema(description = "Route (X(10)).")
 	public String route;
 
@@ -52,8 +49,8 @@ public class CustomerResponse {
 		return distributorAgentIdentifier;
 	}
 
-	public String getCustomerIdentifier() {
-		return customerIdentifier;
+	public String getIdentifier() {
+		return identifier;
 	}
 
 	public String getLegalName() {
@@ -86,10 +83,6 @@ public class CustomerResponse {
 
 	public String getPhoneNumbers() {
 		return phoneNumbers;
-	}
-
-	public String getCustomerIdentifier2() {
-		return customerIdentifier2;
 	}
 
 	public String getRoute() {

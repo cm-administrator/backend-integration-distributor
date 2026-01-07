@@ -5,7 +5,7 @@ import java.util.List;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-public class StockFile {
+public class StockFileResponse {
 
 	@Schema(description = "Tipo do registro do header (deve ser 'H')")
 	public String headerType;
@@ -20,5 +20,26 @@ public class StockFile {
 	public LocalDate stockDate;
 
 	@Schema(description = "Itens/linhas de estoque (registros 'E')")
-	public List<Stock> items;
+	public List<StockResponse> items;
+
+	public String getHeaderType() {
+		return headerType;
+	}
+
+	public String getIdentifier() {
+		return identifier;
+	}
+
+	public String getSupplierIdentifier() {
+		return supplierIdentifier;
+	}
+
+	public LocalDate getStockDate() {
+		return stockDate;
+	}
+
+	public List<StockResponse> getItems() {
+		return items;
+	}
+
 }

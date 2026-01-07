@@ -93,7 +93,7 @@ public class StockService {
 
 		Stock it = new Stock();
 		it.distributorAgentIdentifier = cnpj;
-		it.productCode = codigoProduto;
+		it.productBarcode = codigoProduto;
 
 		// QUANTIDADE: sempre vem no token 3 (ex.: 000000000000428.0000)
 		it.quantity = new BigDecimal(qtdStr);

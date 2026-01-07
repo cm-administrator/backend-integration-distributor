@@ -4,24 +4,26 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
 
-@Schema(name = "Sales", description = "Sales record (line D) from VENDA1 file")
-public class Sales {
+@Schema(name = "SalesResponse", description = "SalesResponse record (line D) from VENDA1 file")
+public class SalesResponse {
 
 	@Schema(description = "Distributor CNPJ (14 digits)", example = "16929282000146")
 	public String distributorIdentifier;
 
 	@Schema(description = "CustomerResponse ID (14 digits in the file)", example = "11285151000150")
-	public String customerId;
+	public String customerIdentifier;
 
 	@Schema(description = "Transaction date (YYYYMMDD)", example = "2025-12-06")
 	public LocalDate transactionDate;
 
+	@NotBlank(message = "o EAN do produto não pode ser nulo!")
+	@Schema(description = "EAN/ProductResponse code (variable length)", example = "7896629630277")
+	public String productBarcode;
+
 	@Schema(description = "Sequence (6 digits after the date in the dataSeq token)", example = "637905")
 	public String sequence;
-
-	@Schema(description = "EAN/Product code (variable length)", example = "7896629630277")
-	public String productEan;
 
 	@Schema(description = "Quantity (4 decimal places)", example = "8.0000")
 	public BigDecimal quantity;
@@ -35,9 +37,40 @@ public class Sales {
 	@Schema(description = "Document (e.g., N78785-000 / B78855-000)", example = "N78785-000")
 	public String document;
 
-	@Schema(description = "Final field 1 (e.g., 00000000)", example = "00000000")
-	public String field7;
+	public String getDistributorIdentifier() {
+		return distributorIdentifier;
+	}
 
-	@Schema(description = "Final field 2 (e.g., 00000.000001)", example = "00000.000001")
-	public String field8;
+	public String getCustomerIdentifier() {
+		return customerIdentifier;
+	}
+
+	public LocalDate getTransactionDate() {
+		return transactionDate;
+	}
+
+	public String getProductBarcode() {
+		return productBarcode;
+	}
+
+	public BigDecimal getQuantity() {
+		return quantity;
+	}
+
+	public BigDecimal getSalePrice() {
+		return salePrice;
+	}
+
+	public String getSalespersonCode() {
+		return salespersonCode;
+	}
+
+	public String getDocument() {
+		return document;
+	}
+
+	public String getSequence() {
+		return sequence;
+	}
+
 }

@@ -2,13 +2,27 @@ package com.br.distributors.models;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Objects;
+
+import com.br.distributors.request.CustomerResponse;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.*;
-import nonapi.io.github.classgraph.json.Id;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "tbCustomer")
+@Table(name = "tbCustomer", indexes = @Index(columnList = "identifier", name = "IDX_CUSTOMER_IDENTIFIER"))
 @Schema(description = "Distributor agent CNPJ (14 digits).")
 public class Customer {
 
@@ -24,7 +38,7 @@ public class Customer {
 
 	@Schema(description = "Customer identification (X(18) - CNPJ/CPF without mask).")
 	@Column
-	private String customerIdentifier;
+	private String identifier;
 
 	@Schema(description = "Customer legal name (X(40)).")
 	@Column
@@ -57,10 +71,6 @@ public class Customer {
 	@Schema(description = "Phone numbers (X(40)).")
 	@Column
 	private String phoneNumbers;
-
-	@Schema(description = "Customer CNPJ/CPF (X(18)).")
-	@Column
-	private String customerIdentifier2;
 
 	@Schema(description = "Route (X(10)).")
 	@Column
@@ -97,6 +107,24 @@ public class Customer {
 
 	}
 
+	public Customer(CustomerResponse response, Distributor distributor) {
+
+		this.distributor = distributor;
+		this.identifier = response.identifier;
+		this.legalName = response.getLegalName();
+		this.address = response.getAddress();
+		this.neighborhood = response.getNeighborhood();
+		this.zipCode = response.getZipCode();
+		this.city = response.getCity();
+		this.state = response.getState();
+		this.responsibleName = response.getResponsibleName();
+		this.phoneNumbers = response.getPhoneNumbers();
+		this.route = response.getRoute();
+		this.storeType = response.getStoreType();
+		this.representativity = response.getRepresentativity();
+
+	}
+
 	public Distributor getDistributor() {
 		return distributor;
 	}
@@ -105,12 +133,12 @@ public class Customer {
 		this.distributor = distributor;
 	}
 
-	public String getCustomerIdentifier() {
-		return customerIdentifier;
+	public String getIdentifier() {
+		return identifier;
 	}
 
-	public void setCustomerIdentifier(String customerIdentifier) {
-		this.customerIdentifier = customerIdentifier;
+	public void setIdentifier(String identifier) {
+		this.identifier = identifier;
 	}
 
 	public String getLegalName() {
@@ -177,14 +205,6 @@ public class Customer {
 		this.phoneNumbers = phoneNumbers;
 	}
 
-	public String getCustomerIdentifier2() {
-		return customerIdentifier2;
-	}
-
-	public void setCustomerIdentifier2(String customerIdentifier2) {
-		this.customerIdentifier2 = customerIdentifier2;
-	}
-
 	public String getRoute() {
 		return route;
 	}
@@ -227,6 +247,31 @@ public class Customer {
 
 	public void setUpdateDate(LocalDateTime updateDate) {
 		this.updateDate = updateDate;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(address, city, identifier, id, integrationDate, legalName, neighborhood, phoneNumbers,
+				representativity, responsibleName, route, state, storeType, updateDate, zipCode);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Customer other = (Customer) obj;
+		return Objects.equals(address, other.address) && Objects.equals(city, other.city)
+				&& Objects.equals(identifier, other.identifier)
+				&& Objects.equals(integrationDate, other.integrationDate) && Objects.equals(legalName, other.legalName)
+				&& Objects.equals(neighborhood, other.neighborhood) && Objects.equals(phoneNumbers, other.phoneNumbers)
+				&& Objects.equals(representativity, other.representativity)
+				&& Objects.equals(responsibleName, other.responsibleName) && Objects.equals(route, other.route)
+				&& Objects.equals(state, other.state) && Objects.equals(storeType, other.storeType)
+				&& Objects.equals(updateDate, other.updateDate) && Objects.equals(zipCode, other.zipCode);
 	}
 
 }

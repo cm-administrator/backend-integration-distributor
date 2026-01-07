@@ -10,7 +10,7 @@ public class Customer {
 	public String distributorAgentIdentifier;
 
 	@Schema(description = "Customer identification (X(18) - CNPJ/CPF without mask).")
-	public String customerIdentifier;
+	public String identifier;
 
 	@Schema(description = "Customer legal name (X(40)).")
 	public String legalName;
@@ -35,9 +35,6 @@ public class Customer {
 
 	@Schema(description = "Phone numbers (X(40)).")
 	public String phoneNumbers;
-
-	@Schema(description = "Customer CNPJ/CPF (X(18)).")
-	public String customerIdentifier2;
 
 	@Schema(description = "Route (X(10)).")
 	public String route;

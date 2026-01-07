@@ -2,6 +2,8 @@ package com.br.distributors.models;
 
 import java.time.LocalDateTime;
 
+import com.br.distributors.request.ProductResponse;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,6 +12,7 @@ import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
@@ -17,7 +20,7 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "tbProduct")
+@Table(name = "tbProduct", indexes = @Index(columnList = "barcode", name = "IDX_PRODUCT_BARCODE"))
 @Schema(description = "Supplier identifier (layout field X(18); content is CNPJ without mask).")
 public class Product {
 
@@ -31,11 +34,7 @@ public class Product {
 	@JoinColumn(name = "fk_Id_Supplier", referencedColumnName = "id", nullable = false, foreignKey = @ForeignKey(name = "FK_FROM_TBSUPPLIER_FOR_TBPRODUCT"))
 	private Supplier supplier;
 
-	@Schema(description = "Supplier legal name.")
-	@Column
-	private String supplierLegalName;
-
-	@Schema(description = "Product internal code at the distributor agent (X(14)).")
+	@Schema(description = "ProductResponse internal code at the distributor agent (X(14)).")
 	@Column
 	private String code;
 
@@ -51,15 +50,15 @@ public class Product {
 	@Column
 	private String barcodeType;
 
-	@Schema(description = "Product name/presentation (X(100)).")
+	@Schema(description = "ProductResponse name/presentation (X(100)).")
 	@Column
 	private String name;
 
-	@Schema(description = "Product division (X(40)).")
+	@Schema(description = "ProductResponse division (X(40)).")
 	@Column
 	private String division;
 
-	@Schema(description = "Product status: 'A' active, 'I' inactive.")
+	@Schema(description = "ProductResponse status: 'A' active, 'I' inactive.")
 	@Column
 	private String status;
 
@@ -85,20 +84,23 @@ public class Product {
 	public Product() {
 	}
 
+	public Product(ProductResponse response, Supplier supplier) {
+		this.supplier = supplier;
+		this.code = response.getCode();
+		this.packagingType = response.getPackagingType();
+		this.barcode = response.getBarcode();
+		this.barcodeType = response.getBarcodeType();
+		this.name = response.getName();
+		this.division = response.getDivision();
+		this.status = response.getStatus();
+	}
+
 	public Supplier getSupplier() {
 		return supplier;
 	}
 
 	public void setSupplier(Supplier supplier) {
 		this.supplier = supplier;
-	}
-
-	public String getSupplierLegalName() {
-		return supplierLegalName;
-	}
-
-	public void setSupplierLegalName(String supplierLegalName) {
-		this.supplierLegalName = supplierLegalName;
 	}
 
 	public String getCode() {

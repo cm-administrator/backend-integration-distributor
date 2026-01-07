@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.br.distributors.request.SalesResponse;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,6 +14,7 @@ import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
@@ -19,8 +22,9 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "tbSales")
-@Schema(name = "Sales", description = "Sales record (line D) from VENDA1 file")
+@Table(name = "tbSales", indexes = {
+		@Index(name = "IX_tbSales_Dedupe", columnList = "fk_Id_Customer,fk_Id_Distributor,fk_Id_Produto,transactionDate,sequence") })
+@Schema(name = "SalesResponse", description = "SalesResponse record (line D) from VENDA1 file")
 public class Sales {
 
 	@Id
@@ -29,17 +33,17 @@ public class Sales {
 	private Long id;
 
 	@ManyToOne(fetch = FetchType.LAZY, optional = true)
-	@JoinColumn(name = "customerId", referencedColumnName = "customerIdentifier", foreignKey = @ForeignKey(name = "FK_FROM_TBCUSTOMER_FOR_TBSALES"))
+	@JoinColumn(name = "fk_Id_Customer", referencedColumnName = "id", foreignKey = @ForeignKey(name = "FK_FROM_TBCUSTOMER_FOR_TBSALES"))
 	@Schema(description = "Cliente")
 	private Customer customer;
 
 	@ManyToOne(fetch = FetchType.LAZY, optional = true)
-	@JoinColumn(name = "productEan", referencedColumnName = "barcode", foreignKey = @ForeignKey(name = "FK_FROM_TBPRODUCT_FOR_TBSALES"))
+	@JoinColumn(name = "fk_Id_Produto", referencedColumnName = "id", foreignKey = @ForeignKey(name = "FK_FROM_TBPRODUCT_FOR_TBSALES"))
 	@Schema(description = "Produto")
 	private Product product;
 
 	@ManyToOne(fetch = FetchType.LAZY, optional = true)
-	@JoinColumn(name = "salespersonCode", referencedColumnName = "salespersonCode", foreignKey = @ForeignKey(name = "FK_FROM_TBSALESPERSON_FOR_TBSALES"))
+	@JoinColumn(name = "fk_Id_SalesPerson", referencedColumnName = "id", foreignKey = @ForeignKey(name = "FK_FROM_TBSALESPERSON_FOR_TBSALES"))
 	@Schema(description = "Vendedor")
 	private SalesPerson salesPerson;
 
@@ -51,6 +55,9 @@ public class Sales {
 	@Schema(description = "Transaction date (YYYYMMDD)", example = "2025-12-06")
 	@Column
 	private LocalDate transactionDate;
+
+	@Schema(description = "Sequence (6 digits after the date in the dataSeq token)", example = "637905")
+	public String sequence;
 
 	@Schema(description = "Quantity (4 decimal places)", example = "8.0000")
 	@Column
@@ -84,6 +91,21 @@ public class Sales {
 	}
 
 	public Sales() {
+
+	}
+
+	public Sales(SalesResponse response, Customer customer, Product product, SalesPerson salesPerson,
+			Distributor distributor) {
+
+		this.customer = customer;
+		this.product = product;
+		this.salesPerson = salesPerson;
+		this.distributor = distributor;
+		this.transactionDate = response.getTransactionDate();
+		this.quantity = response.getQuantity();
+		this.salePrice = response.getSalePrice();
+		this.document = response.getDocument();
+		this.sequence = response.getSequence();
 
 	}
 
@@ -169,6 +191,14 @@ public class Sales {
 
 	public void setUpdateDate(LocalDateTime updateDate) {
 		this.updateDate = updateDate;
+	}
+
+	public String getSequence() {
+		return sequence;
+	}
+
+	public void setSequence(String sequence) {
+		this.sequence = sequence;
 	}
 
 }

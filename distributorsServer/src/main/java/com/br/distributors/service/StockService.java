@@ -1,138 +1,135 @@
 package com.br.distributors.service;
 
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.br.distributors.request.Stock;
-import com.br.distributors.request.StockFile;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.br.distributors.models.Distributor;
+import com.br.distributors.models.Product;
+import com.br.distributors.models.Stock;
+import com.br.distributors.repository.StockRepository;
+import com.br.distributors.request.StockFileResponse;
+import com.br.distributors.request.StockResponse;
+
+import jakarta.persistence.EntityNotFoundException;
 
 @Service
 public class StockService {
 
-	private static final DateTimeFormatter BASIC = DateTimeFormatter.BASIC_ISO_DATE;
+	private final StockRepository stockRepository;
+	private final ProductService productService;
+	private final DistributorService distributorService;
 
-	// Header real:
-	// HESTOQ111475769500024620251231
-	// H + IDENT + CNPJ(14) + DATA(8)
-	private static final Pattern HEADER = Pattern.compile("^H([A-Z0-9]+?)(\\d{14})(\\d{8})\\s*$");
-
-	// Detalhe real (tokens):
-	// E + CNPJ(14) + CODIGO_VARIAVEL + QTD_DECIMAL_4 + ... + ULTIMO_TOKEN
-	// Ex:
-	// E169292820001467896629630086 000000000000428.0000 000000000001
-	private static final Pattern DETALHE = Pattern.compile("^E(\\d{14})(\\S+)\\s+(\\d+\\.\\d{4})(.*)$");
-
-	public String converter(Path path) throws IOException {
-
-		StockFile arquivo = parse(path);
-
-		ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule())
-				.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-		String json = mapper.writeValueAsString(arquivo);
-		return json;
+	public StockService(StockRepository stockRepository, ProductService productService,
+			DistributorService distributorService) {
+		this.stockRepository = stockRepository;
+		this.productService = productService;
+		this.distributorService = distributorService;
 	}
 
-	public static StockFile parse(Path path) throws IOException {
-		List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
-
-		StockFile out = new StockFile();
-		out.items = new ArrayList<>();
-
-		for (String raw : lines) {
-			String line = raw == null ? "" : raw.stripTrailing();
-			if (line.isBlank())
-				continue;
-
-			char tipo = line.charAt(0);
-
-			if (tipo == 'H') {
-				parseHeader(line, out);
-			} else if (tipo == 'E') {
-				Stock it = parseDetalhe(line);
-				if (it != null)
-					out.items.add(it);
-			}
-		}
-
-		return out;
+	@Transactional(readOnly = true)
+	public Stock findById(Long stockId) {
+		return stockRepository.findById(stockId)
+				.orElseThrow(() -> new EntityNotFoundException("Estoque não encontrado para ID: " + stockId));
 	}
 
-	private static void parseHeader(String line, StockFile out) {
-		Matcher m = HEADER.matcher(line.trim());
-		if (!m.matches())
+	/**
+	 * Ajuste o critério de busca conforme seu domínio: - se estoque é por
+	 * produto+distribuidor, use os dois campos - se estoque é só por produto, use
+	 * apenas barcode
+	 */
+	@Transactional(readOnly = true)
+	private Optional<Stock> findByBarcodeAndDistributorIdentifier(String barcode, String distributorIdentifier) {
+		return stockRepository.findByProductBarcodeAndDistributorIdentifier(barcode, distributorIdentifier);
+	}
+
+	@Transactional(readOnly = true)
+	public Stock getByBarcodeAndDistributorIdentifier(String barcode, String distributorIdentifier) {
+		return findByBarcodeAndDistributorIdentifier(barcode, distributorIdentifier)
+				.orElseThrow(() -> new EntityNotFoundException("Estoque não encontrado para o EAN: " + barcode));
+	}
+
+	/**
+	 * Insere apenas stocks ainda inexistentes (por barcode do produto). Evita N
+	 * queries (uma por item) buscando todos os barcodes existentes de uma vez.
+	 *
+	 * Observação: se o seu estoque for por (distribuidor + produto), troque o
+	 * conjunto de chaves para usar ambos e ajuste o repository.
+	 */
+	@Transactional
+	public void saveAll(StockFileResponse response) {
+		List<StockResponse> items = response.getItems();
+		if (items == null || items.isEmpty())
 			return;
 
-		out.identifier = m.group(1).trim();
-		out.supplierIdentifier = m.group(2).trim();
-		out.stockDate = LocalDate.parse(m.group(3).trim(), BASIC);
-	}
+		LocalDate stockDate = response.getStockDate();
 
-	private static Stock parseDetalhe(String line) {
-		Matcher m = DETALHE.matcher(line.trim());
-		if (!m.matches())
-			return null;
+		// Coleta barcodes e distribuidores presentes no arquivo (para busca em lote)
+		Set<String> barcodes = items.stream().map(StockResponse::getProductBarcode).filter(Objects::nonNull)
+				.map(String::trim).filter(s -> !s.isBlank()).collect(Collectors.toSet());
 
-		String cnpj = m.group(1);
-		String codigoProduto = m.group(2);
-		String qtdStr = m.group(3);
-		String resto = m.group(4) == null ? "" : m.group(4).trim();
+		if (barcodes.isEmpty())
+			return;
 
-		Stock it = new Stock();
-		it.distributorAgentIdentifier = cnpj;
-		it.productCode = codigoProduto;
+		Set<String> distributorIdentifiers = items.stream().map(i -> i.distributorAgentIdentifier)
+				.filter(Objects::nonNull).map(String::trim).filter(s -> !s.isBlank()).collect(Collectors.toSet());
 
-		// QUANTIDADE: sempre vem no token 3 (ex.: 000000000000428.0000)
-		it.quantity = new BigDecimal(qtdStr);
+		// Busca existentes em lote (vai trazer combinações distribuidor+barcode
+		// existentes)
+		List<Stock> existingStocks = stockRepository
+				.findAllByDistributorIdentifierInAndProductBarcodeIn(distributorIdentifiers, barcodes);
 
-		// O que sobra depois da quantidade pode ter vários brancos.
-		// Regra segura:
-		// - se houver tokens no "resto", pega o ÚLTIMO como codigoLote
-		// - se algum token tiver 8 dígitos e for data válida, vira validadeLote
-		if (!resto.isBlank()) {
-			String[] tokens = resto.split("\\s+");
+		// Mapa por chave composta: distributor|barcode
+		Map<String, Stock> existingByKey = existingStocks.stream().collect(Collectors
+				.toMap(s -> key(s.getDistributor().getIdentifier(), s.getProduct().getBarcode()), s -> s, (a, b) -> a));
 
-			// validade AAAAMMDD (se existir)
-			for (String t : tokens) {
-				if (looksLikeDate(t)) {
-					it.batchExpirationDate = LocalDate.parse(t, BASIC);
-					break;
-				}
+		// Processa: insere novos e atualiza existentes quando a data for diferente
+		List<Stock> toInsert = items.stream().map(item -> {
+			String barcode = item.getProductBarcode() == null ? "" : item.getProductBarcode().trim();
+			String distId = item.distributorAgentIdentifier == null ? "" : item.distributorAgentIdentifier.trim();
+
+			if (barcode.isBlank() || distId.isBlank())
+				return null;
+
+			Stock existing = existingByKey.get(key(distId, barcode));
+
+			if (existing == null) {
+				return toStock(item, stockDate);
 			}
 
-			// lote = último token (no seu exemplo: 000000000001)
-			String last = tokens[tokens.length - 1].trim();
-			it.batchCode = last.isBlank() ? null : last;
-		}
+			// regra: se a data do arquivo for diferente da registrada, atualiza quantity
+			if (!stockDate.equals(existing.getStockDate())) {
+				existing.setQuantity(item.getQuantity()); // ajuste se o getter for outro
+				existing.setStockDate(stockDate); // recomendado manter consistente
+			}
 
-		return it;
+			return null;
+		}).filter(Objects::nonNull).toList();
+
+		if (!toInsert.isEmpty()) {
+			stockRepository.saveAll(toInsert);
+		}
 	}
 
-	private static boolean looksLikeDate(String s) {
-		if (s == null || s.length() != 8)
-			return false;
-		for (int i = 0; i < 8; i++) {
-			if (!Character.isDigit(s.charAt(i)))
-				return false;
+	private String key(String distributorIdentifier, String barcode) {
+		return distributorIdentifier + "|" + barcode;
+	}
+
+	private Stock toStock(StockResponse response, LocalDate stockDate) {
+		Product product = productService.getByBarcode(response.getProductBarcode());
+		if (product == null) {
+			return null;
+		} else {
+			Distributor distributor = distributorService.getByIdentifier(response.distributorAgentIdentifier);
+			return new Stock(response, product, distributor, stockDate);
 		}
-		try {
-			LocalDate.parse(s, BASIC);
-			return true;
-		} catch (Exception e) {
-			return false;
-		}
+
 	}
 }

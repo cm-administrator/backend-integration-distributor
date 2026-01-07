@@ -91,7 +91,7 @@ public class CustomerService {
 		Customer c = new Customer();
 
 		c.distributorAgentIdentifier = onlyDigits(slice(padded, 2, 14));
-		c.customerIdentifier = slice(padded, 16, 18).trim();
+		c.identifier = slice(padded, 16, 18).trim();
 
 		c.legalName = slice(padded, 34, 40).trim();
 		c.address = slice(padded, 74, 40).trim();
@@ -110,7 +110,7 @@ public class CustomerService {
 		c.responsibleName = slice(padded, 213, 20).trim();
 		c.phoneNumbers = slice(padded, 233, 40).trim();
 
-		c.customerIdentifier2 = slice(padded, 273, 18).trim();
+		// c.customerIdentifier2 = slice(padded, 273, 18).trim();
 		c.route = slice(padded, 291, 10).trim();
 		c.storeType = slice(padded, 311, 10).trim();
 

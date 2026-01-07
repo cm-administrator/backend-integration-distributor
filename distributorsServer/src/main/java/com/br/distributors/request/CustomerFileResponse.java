@@ -16,22 +16,22 @@ public class CustomerFileResponse {
 	public String supplierIdentifier;
 
 	@Schema(description = "Lista de clientes (registros 'D').")
-	public List<CustomerResponse> customerResponses;
+	public List<CustomerResponse> customers;
 
-	public void setHeaderType(String headerType) {
-		this.headerType = headerType;
+	public String getHeaderType() {
+		return headerType;
 	}
 
-	public void setIdentifier(String identifier) {
-		this.identifier = identifier;
+	public String getIdentifier() {
+		return identifier;
 	}
 
-	public void setSupplierIdentifier(String supplierIdentifier) {
-		this.supplierIdentifier = supplierIdentifier;
+	public String getSupplierIdentifier() {
+		return supplierIdentifier;
 	}
 
-	public void setCustomerResponses(List<CustomerResponse> customerResponses) {
-		this.customerResponses = customerResponses;
+	public List<CustomerResponse> getCustomers() {
+		return customers;
 	}
 
 }

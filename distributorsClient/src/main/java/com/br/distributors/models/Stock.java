@@ -14,7 +14,7 @@ public class Stock {
 	public String distributorAgentIdentifier;
 
 	@Schema(description = "Product code (manual: X(14) - EAN13/DUN14/SKU; may vary in file).")
-	public String productCode;
+	public String productBarcode;
 
 	@Schema(description = "Stock quantity.")
 	public BigDecimal quantity;

@@ -17,11 +17,11 @@ public class Sales {
 	@Schema(description = "Transaction date (YYYYMMDD)", example = "2025-12-06")
 	public LocalDate transactionDate;
 
-//	@Schema(description = "Sequence (6 digits after the date in the dataSeq token)", example = "637905")
-//	public String sequence;
+	@Schema(description = "Sequence (6 digits after the date in the dataSeq token)", example = "637905")
+	public String sequence;
 
 	@Schema(description = "EAN/Product code (variable length)", example = "7896629630277")
-	public String productEan;
+	public String productBarcode;
 
 	@Schema(description = "Quantity (4 decimal places)", example = "8.0000")
 	public BigDecimal quantity;

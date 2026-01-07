@@ -4,7 +4,10 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.br.distributors.request.SalesPersonResponse;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -35,24 +38,24 @@ public class SalesPerson {
 	@JoinColumn(name = "fk_Id_Distributor", referencedColumnName = "id", nullable = false, foreignKey = @ForeignKey(name = "FK_FROM_TBDISTRIBUTOR_FOR_TBSALESPERSON"))
 	private Distributor distributor;
 
-	@ManyToMany(fetch = FetchType.LAZY)
+	@ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
 	@JoinTable(name = "tbSalesPersonCustomer", joinColumns = @JoinColumn(name = "salesPersonId", nullable = false, foreignKey = @ForeignKey(name = "FK_FROM_TBSALESPERSON_FOR_TBSALESPERSONCUSTOMER")), inverseJoinColumns = @JoinColumn(name = "customerId", nullable = false, foreignKey = @ForeignKey(name = "FK_FROM_TBCUSTOMER_FOR_TBSALESPERSONCUSTOMER")))
 	@Schema(description = "Clientes desse vendedor")
 	private Set<Customer> customers = new HashSet<>();;
 
-	@Schema(description = "Sales manager code (X(13)).")
+	@Schema(description = "SalesResponse manager code (X(13)).")
 	@Column
 	private String salesManagerCode;
 
-	@Schema(description = "Sales manager name (X(50)).")
+	@Schema(description = "SalesResponse manager name (X(50)).")
 	@Column
 	private String salesManagerName;
 
-	@Schema(description = "Sales supervisor code (X(13)).")
+	@Schema(description = "SalesResponse supervisor code (X(13)).")
 	@Column
 	private String salesSupervisorCode;
 
-	@Schema(description = "Sales supervisor name (X(50)).")
+	@Schema(description = "SalesResponse supervisor name (X(50)).")
 	@Column
 	private String salesSupervisorName;
 
@@ -84,6 +87,16 @@ public class SalesPerson {
 
 	public SalesPerson() {
 
+	}
+
+	public SalesPerson(SalesPersonResponse response, Distributor distributor) {
+		this.distributor = distributor;
+		this.salesManagerCode = response.getSalesManagerCode();
+		this.salesManagerName = response.getSalesManagerName();
+		this.salesSupervisorCode = response.getSalesSupervisorCode();
+		this.salesSupervisorName = response.getSalesSupervisorName();
+		this.salespersonCode = response.getSalespersonCode();
+		this.salespersonName = response.getSalespersonName();
 	}
 
 	public Long getId() {

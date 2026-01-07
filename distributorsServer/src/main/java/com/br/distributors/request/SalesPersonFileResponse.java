@@ -4,7 +4,7 @@ import java.util.List;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-public class SalesPersonFile {
+public class SalesPersonFileResponse {
 
 	@Schema(description = "Tipo do registro do header (deve ser 'H')")
 	public String headerType;
@@ -16,5 +16,22 @@ public class SalesPersonFile {
 	public String supplierIdentifier;
 
 	@Schema(description = "Registros de força de vendas (linhas 'D').")
-	public List<SalesPerson> details;
+	public List<SalesPersonResponse> details;
+
+	public String getHeaderType() {
+		return headerType;
+	}
+
+	public String getIdentifier() {
+		return identifier;
+	}
+
+	public String getSupplierIdentifier() {
+		return supplierIdentifier;
+	}
+
+	public List<SalesPersonResponse> getDetails() {
+		return details;
+	}
+
 }
