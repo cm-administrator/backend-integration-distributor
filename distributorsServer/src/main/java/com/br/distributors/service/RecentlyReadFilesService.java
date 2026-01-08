@@ -9,6 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.br.distributors.models.Distributor;
 import com.br.distributors.models.RecentlyReadFiles;
 import com.br.distributors.repository.RecentlyReadFilesRepository;
+import com.br.distributors.request.BatchUpdateRequest;
+import com.br.distributors.response.BatchUpdateResult;
+import com.br.distributors.specification.RecentlyReadFilesSpecification;
 
 @Service
 public class RecentlyReadFilesService {
@@ -16,101 +19,77 @@ public class RecentlyReadFilesService {
 	private final RecentlyReadFilesRepository recentlyReadFilesRepository;
 	private final DistributorService distributorService;
 
-	public RecentlyReadFilesService(RecentlyReadFilesRepository recentlyReadFilesRepository,
-			DistributorService distributorService) {
-		this.recentlyReadFilesRepository = recentlyReadFilesRepository;
+	public RecentlyReadFilesService(RecentlyReadFilesRepository repo, DistributorService distributorService) {
+		this.recentlyReadFilesRepository = repo;
 		this.distributorService = distributorService;
 	}
 
 	@Transactional
-	public RecentlyReadFiles getOrCreateBydistributorIdentifierentifier(String distributorIdentifierentifier) {
-		Distributor distributor = distributorService.getByIdentifier(distributorIdentifierentifier);
+	public BatchUpdateResult updateIfNewerBatch(String distributorIdentifier, BatchUpdateRequest req) {
+		if (req == null) {
+			return BatchUpdateResult.none();
+		}
 
-		return recentlyReadFilesRepository.findByDistributor_Identifier(distributorIdentifierentifier).orElseGet(() -> {
-			RecentlyReadFiles r = new RecentlyReadFiles(distributor);
+		Distributor distributor = distributorService.getByIdentifier(distributorIdentifier);
 
-			return recentlyReadFilesRepository.save(r);
-		});
+		RecentlyReadFiles last = recentlyReadFilesRepository
+				.findAll(RecentlyReadFilesSpecification.distributorIdentifierEquals(distributorIdentifier)).stream()
+				.findFirst().orElseGet(() -> recentlyReadFilesRepository.save(new RecentlyReadFiles(distributor)));
+
+		boolean updCustomers = shouldUpdate(req.customersInstant(), last.getCustomersInstant());
+		boolean updProducts = shouldUpdate(req.productInstant(), last.getProductInstant());
+		boolean updSalesPers = shouldUpdate(req.salesPersonInstant(), last.getSalesPersonInstant());
+		boolean updStock = shouldUpdate(req.stockInstant(), last.getStockInstant());
+		boolean updSales = shouldUpdate(req.salesInstant(), last.getSalesInstant());
+
+		if (!(updCustomers || updProducts || updSalesPers || updStock || updSales)) {
+			return new BatchUpdateResult(false, false, false, false, false);
+		}
+
+		RecentlyReadFiles next = cloneSnapshot(last, distributor);
+
+		if (updCustomers) {
+			next.setCustomersFile(req.customersFile());
+			next.setCustomersInstant(req.customersInstant());
+		}
+		if (updProducts) {
+			next.setProductFile(req.productFile());
+			next.setProductInstant(req.productInstant());
+		}
+		if (updSalesPers) {
+			next.setSalesPersonFile(req.salesPersonFile());
+			next.setSalesPersonInstant(req.salesPersonInstant());
+		}
+		if (updStock) {
+			next.setStockFile(req.stockFile());
+			next.setStockInstant(req.stockInstant());
+		}
+		if (updSales) {
+			next.setSalesFile(req.salesFile());
+			next.setSalesInstant(req.salesInstant());
+		}
+
+		recentlyReadFilesRepository.save(next);
+
+		return new BatchUpdateResult(updCustomers, updProducts, updSalesPers, updStock, updSales);
 	}
 
-	/**
-	 * Busca os últimos arquivos lidos (sem criar).
-	 */
+	private boolean shouldUpdate(Instant instant, Instant lastInstant) {
+		if (instant == null)
+			return false;
+		return lastInstant == null || instant.isAfter(lastInstant);
+	}
+
+	private RecentlyReadFiles cloneSnapshot(RecentlyReadFiles base, Distributor distributor) {
+		RecentlyReadFiles next = new RecentlyReadFiles(distributor, base);
+		return next;
+	}
+
 	@Transactional(readOnly = true)
 	public Optional<RecentlyReadFiles> findBydistributorIdentifier(String distributorIdentifier) {
-		return recentlyReadFilesRepository.findByDistributor_Identifier(distributorIdentifier);
+		return recentlyReadFilesRepository
+				.findAll(RecentlyReadFilesSpecification.distributorIdentifierEquals(distributorIdentifier)).stream()
+				.findFirst();
 	}
 
-	@Transactional
-	public boolean updateCustomersIfNewer(String distributorIdentifier, String fileName, Instant fileInstant) {
-		RecentlyReadFiles r = getOrCreateBydistributorIdentifierentifier(distributorIdentifier);
-
-		if (isNewer(fileInstant, r.getCustomersInstant())) {
-			r.setCustomersFile(fileName);
-			r.setCustomersInstant(fileInstant);
-			recentlyReadFilesRepository.save(r);
-			return true;
-		}
-		return false;
-	}
-
-	@Transactional
-	public boolean updateSalesIfNewer(String distributorIdentifier, String fileName, Instant fileInstant) {
-		RecentlyReadFiles r = getOrCreateBydistributorIdentifierentifier(distributorIdentifier);
-
-		if (isNewer(fileInstant, r.getSalesInstant())) {
-			r.setSalesFile(fileName);
-			r.setSalesInstant(fileInstant);
-			recentlyReadFilesRepository.save(r);
-			return true;
-		}
-		return false;
-	}
-
-	@Transactional
-	public boolean updateStockIfNewer(String distributorIdentifier, String fileName, Instant fileInstant) {
-		RecentlyReadFiles r = getOrCreateBydistributorIdentifierentifier(distributorIdentifier);
-
-		if (isNewer(fileInstant, r.getStockInstant())) {
-			r.setStockFile(fileName);
-			r.setStockInstant(fileInstant);
-			recentlyReadFilesRepository.save(r);
-			return true;
-		}
-		return false;
-	}
-
-	@Transactional
-	public boolean updateProductsIfNewer(String distributorIdentifier, String fileName, Instant fileInstant) {
-		RecentlyReadFiles r = getOrCreateBydistributorIdentifierentifier(distributorIdentifier);
-
-		if (isNewer(fileInstant, r.getProductInstant())) {
-			r.setProductFile(fileName);
-			r.setProductInstant(fileInstant);
-			recentlyReadFilesRepository.save(r);
-			return true;
-		}
-		return false;
-	}
-
-	@Transactional
-	public boolean updateSalesPersonIfNewer(String distributorIdentifier, String fileName, Instant fileInstant) {
-		RecentlyReadFiles r = getOrCreateBydistributorIdentifierentifier(distributorIdentifier);
-
-		if (isNewer(fileInstant, r.getSalesPersonInstant())) {
-			r.setSalesPersonFile(fileName);
-			r.setSalesPersonInstant(fileInstant);
-			recentlyReadFilesRepository.save(r);
-			return true;
-		}
-		return false;
-	}
-
-	private boolean isNewer(Instant candidate, Instant last) {
-		if (candidate == null)
-			return false;
-		if (last == null)
-			return true;
-		return candidate.isAfter(last);
-	}
 }

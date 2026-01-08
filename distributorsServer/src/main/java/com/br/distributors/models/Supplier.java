@@ -3,10 +3,14 @@ package com.br.distributors.models;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
@@ -27,6 +31,10 @@ public class Supplier {
 	@Schema(description = "Razão social do fornecedor")
 	@Column(length = 255)
 	private String legalName;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "fk_Id_EmailConfig", foreignKey = @ForeignKey(name = "FK_FROM_TBEMAILCONFIG_FOR_TBSUPPLIER"))
+	private EmailConfiguration emailConfig;
 
 	public Supplier() {
 
@@ -56,4 +64,13 @@ public class Supplier {
 	public Long getId() {
 		return id;
 	}
+
+	public EmailConfiguration getEmailConfig() {
+		return emailConfig;
+	}
+
+	public void setEmailConfig(EmailConfiguration emailConfig) {
+		this.emailConfig = emailConfig;
+	}
+
 }

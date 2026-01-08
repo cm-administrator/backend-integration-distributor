@@ -21,11 +21,9 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 
 @Entity
-@Table(name = "tbRecentlyReadFiles", uniqueConstraints = {
-		@UniqueConstraint(name = "UK_RecentlyReadFiles_Distributor", columnNames = "fk_Id_Distributor") })
+@Table(name = "tbRecentlyReadFiles")
 @Schema(description = "Armazena o último arquivo lido por tipo, por distribuidor, para evitar reprocessamento")
 public class RecentlyReadFiles {
 
@@ -86,24 +84,26 @@ public class RecentlyReadFiles {
 	}
 
 	public RecentlyReadFiles(Distributor distributor) {
-		Instant epoch = Instant.EPOCH;
-
-		this.customersFile = "FIRST_READ";
-		this.customersInstant = epoch;
-
-		this.salesFile = "FIRST_READ";
-		this.salesInstant = epoch;
-
-		this.stockFile = "FIRST_READ";
-		this.stockInstant = epoch;
-
-		this.productFile = "FIRST_READ";
-		this.productInstant = epoch;
-
-		this.salesPersonFile = "FIRST_READ";
-		this.salesPersonInstant = epoch;
-
 		this.distributor = distributor;
+	}
+
+	public RecentlyReadFiles(Distributor distributor, RecentlyReadFiles base) {
+		this(distributor);
+
+		this.setCustomersFile(base.getCustomersFile());
+		this.setCustomersInstant(base.getCustomersInstant());
+
+		this.setSalesFile(base.getSalesFile());
+		this.setSalesInstant(base.getSalesInstant());
+
+		this.setStockFile(base.getStockFile());
+		this.setStockInstant(base.getStockInstant());
+
+		this.setProductFile(base.getProductFile());
+		this.setProductInstant(base.getProductInstant());
+
+		this.setSalesPersonFile(base.getSalesPersonFile());
+		this.setSalesPersonInstant(base.getSalesPersonInstant());
 	}
 
 	@PrePersist

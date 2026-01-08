@@ -17,9 +17,13 @@ public class Distributor {
 	@Column(nullable = false, length = 14, unique = true)
 	private String identifier;
 
-	@Schema(description = "Razão social (se o sistema fornecer em algum ponto)")
+	@Schema(description = "Razão social")
 	@Column(length = 255)
 	private String legalName;
+
+	@Schema(description = "E-mail")
+	@Column(length = 255)
+	private String email;
 
 	public Distributor() {
 
@@ -44,6 +48,14 @@ public class Distributor {
 
 	public void setLegalName(String legalName) {
 		this.legalName = legalName;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
 	}
 
 	public Long getId() {

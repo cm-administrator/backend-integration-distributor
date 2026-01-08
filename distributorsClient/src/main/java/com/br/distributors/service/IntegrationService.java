@@ -19,7 +19,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import com.br.distributors.service.RecentlyReadFilesApiClient.RecentlyReadFilesDto;
+import com.br.distributors.request.BatchUpdateRequest;
+import com.br.distributors.response.RecentlyReadFilesResponse;
 
 @Service
 public class IntegrationService {
@@ -97,7 +98,8 @@ public class IntegrationService {
 					() -> new IOException("Arquivo não encontrado: prefixo " + PREFIX_ESTOQUE + " em " + dir));
 
 			// Busca último lido no sistema remoto (404 => null)
-			RecentlyReadFilesDto last = recentlyReadFilesApiClient.getByDistributorIdentifier(distributorIdentifier);
+			RecentlyReadFilesResponse last = recentlyReadFilesApiClient
+					.getByDistributorIdentifier(distributorIdentifier);
 
 			Instant tsClientes = fileInstantFromNameOrLastModified(arqClientes, PREFIX_CLIENTES);
 			Instant tsProdutos = fileInstantFromNameOrLastModified(arqProdutos, PREFIX_PRODUTOS);
@@ -112,18 +114,15 @@ public class IntegrationService {
 			boolean newEstoque = isNewer(tsEstoque, last == null ? null : last.getStockInstant());
 
 			// Não tem nada novo => sai
-			if (!(newClientes || newProdutos || newForca || newVendas || newEstoque)) {
+			if (!(newClientes || newProdutos || newForca || newEstoque || newVendas)) {
 				return;
 			}
 
-			// Converte (mantive seu fluxo enviando todos; se quiser eu ajusto pra enviar só
-			// os "new*")
 			String clientesJson = clienteService.converter(arqClientes);
 			String produtosJson = produtoService.converter(arqProdutos);
 			String forcaVendasJson = salesPersonService.converter(arqForcaVendas);
 			String estoqueJson = estoqueService.converter(arqEstoque);
 
-			// POSTs na ordem: customer -> products -> salesperson -> sales -> stock
 			var rClientes = integrationApiClient.postCustomers(clientesJson);
 			if (!rClientes.success()) {
 				System.out.println("POST /clientes -> " + rClientes.status() + " success=" + rClientes.success());
@@ -154,27 +153,14 @@ public class IntegrationService {
 				return;
 			}
 
-			// Atualiza checkpoint remoto SOMENTE após sucesso geral
-			if (newClientes) {
-				recentlyReadFilesApiClient.updateCustomersIfNewer(distributorIdentifier,
-						arqClientes.getFileName().toString(), tsClientes);
-			}
-			if (newProdutos) {
-				recentlyReadFilesApiClient.updateProductsIfNewer(distributorIdentifier,
-						arqProdutos.getFileName().toString(), tsProdutos);
-			}
-			if (newForca) {
-				recentlyReadFilesApiClient.updateSalesPersonIfNewer(distributorIdentifier,
-						arqForcaVendas.getFileName().toString(), tsForca);
-			}
-			if (newVendas) {
-				recentlyReadFilesApiClient.updateSalesIfNewer(distributorIdentifier, arqVendas.getFileName().toString(),
-						tsVendas);
-			}
-			if (newEstoque) {
-				recentlyReadFilesApiClient.updateStockIfNewer(distributorIdentifier,
-						arqEstoque.getFileName().toString(), tsEstoque);
-			}
+			BatchUpdateRequest req = new BatchUpdateRequest(newClientes ? arqClientes.getFileName().toString() : null,
+					newClientes ? tsClientes : null, newProdutos ? arqProdutos.getFileName().toString() : null,
+					newProdutos ? tsProdutos : null, newForca ? arqForcaVendas.getFileName().toString() : null,
+					newForca ? tsForca : null, newEstoque ? arqEstoque.getFileName().toString() : null,
+					newEstoque ? tsEstoque : null, newVendas ? arqVendas.getFileName().toString() : null,
+					newVendas ? tsVendas : null);
+
+			recentlyReadFilesApiClient.updateIfNewerBatch(distributorIdentifier, req);
 
 			System.out.println("POST /clientes -> " + rClientes.status() + " success=" + rClientes.success());
 			System.out.println("POST /produtos -> " + rProdutos.status() + " success=" + rProdutos.success());

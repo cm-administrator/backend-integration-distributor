@@ -1,16 +1,19 @@
 package com.br.distributors.controller;
 
-import java.time.Instant;
-import java.util.Map;
-
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.br.distributors.models.RecentlyReadFiles;
+import com.br.distributors.request.BatchUpdateRequest;
+import com.br.distributors.response.BatchUpdateResult;
 import com.br.distributors.service.RecentlyReadFilesService;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 @RestController
@@ -32,59 +35,12 @@ public class RecentlyReadFilesController {
 				.orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
-	@PostMapping("/{distributorIdentifier}/customers")
-	@Operation(summary = "Atualiza o último arquivo de clientes se o informado for mais recente")
-	@ApiResponse(responseCode = "200", description = "Atualização avaliada com sucesso")
-	public ResponseEntity<Map<String, Object>> updateCustomers(@PathVariable String distributorIdentifier,
-			@RequestBody UpdateFileRequest request) {
-		boolean updated = recentlyReadFilesService.updateCustomersIfNewer(distributorIdentifier, request.fileName(),
-				request.fileInstant());
-		return ResponseEntity.ok(Map.of("updated", updated));
+	@Operation(summary = "Atualiza checkpoints em lote (somente se o timestamp for mais novo)")
+	@ApiResponse(responseCode = "200", description = "Processado com sucesso")
+	@PostMapping("/{identifier}/batch-if-newer")
+	public ResponseEntity<BatchUpdateResult> batchIfNewer(@PathVariable("identifier") String distributorIdentifier,
+			@RequestBody BatchUpdateRequest request) {
+		return ResponseEntity.ok(recentlyReadFilesService.updateIfNewerBatch(distributorIdentifier, request));
 	}
 
-	@PostMapping("/{distributorIdentifier}/sales")
-	@Operation(summary = "Atualiza o último arquivo de vendas se o informado for mais recente")
-	@ApiResponse(responseCode = "200", description = "Atualização avaliada com sucesso")
-	public ResponseEntity<Map<String, Object>> updateSales(@PathVariable String distributorIdentifier,
-			@RequestBody UpdateFileRequest request) {
-		boolean updated = recentlyReadFilesService.updateSalesIfNewer(distributorIdentifier, request.fileName(),
-				request.fileInstant());
-		return ResponseEntity.ok(Map.of("updated", updated));
-	}
-
-	@PostMapping("/{distributorIdentifier}/stock")
-	@Operation(summary = "Atualiza o último arquivo de estoque se o informado for mais recente")
-	@ApiResponse(responseCode = "200", description = "Atualização avaliada com sucesso")
-	public ResponseEntity<Map<String, Object>> updateStock(@PathVariable String distributorIdentifier,
-			@RequestBody UpdateFileRequest request) {
-		boolean updated = recentlyReadFilesService.updateStockIfNewer(distributorIdentifier, request.fileName(),
-				request.fileInstant());
-		return ResponseEntity.ok(Map.of("updated", updated));
-	}
-
-	@PostMapping("/{distributorIdentifier}/products")
-	@Operation(summary = "Atualiza o último arquivo de produtos se o informado for mais recente")
-	@ApiResponse(responseCode = "200", description = "Atualização avaliada com sucesso")
-	public ResponseEntity<Map<String, Object>> updateProducts(@PathVariable String distributorIdentifier,
-			@RequestBody UpdateFileRequest request) {
-		boolean updated = recentlyReadFilesService.updateProductsIfNewer(distributorIdentifier, request.fileName(),
-				request.fileInstant());
-		return ResponseEntity.ok(Map.of("updated", updated));
-	}
-
-	@PostMapping("/{distributorIdentifier}/sales-person")
-	@Operation(summary = "Atualiza o último arquivo de vendedores/força de vendas se o informado for mais recente")
-	@ApiResponse(responseCode = "200", description = "Atualização avaliada com sucesso")
-	public ResponseEntity<Map<String, Object>> updateSalesPerson(@PathVariable String distributorIdentifier,
-			@RequestBody UpdateFileRequest request) {
-		boolean updated = recentlyReadFilesService.updateSalesPersonIfNewer(distributorIdentifier, request.fileName(),
-				request.fileInstant());
-		return ResponseEntity.ok(Map.of("updated", updated));
-	}
-
-	@Schema(description = "Payload para atualizar o último arquivo lido de um tipo")
-	public static record UpdateFileRequest(
-			@Schema(description = "Nome do arquivo (ex: CLIENTESCAN05012026135316893.txt)", example = "CLIENTESCAN05012026135316893.txt") String fileName,
-			@Schema(description = "Instant do arquivo (UTC). Ex: 2026-01-05T16:53:28.215Z", example = "2026-01-05T16:53:28.215Z") Instant fileInstant) {
-	}
 }
