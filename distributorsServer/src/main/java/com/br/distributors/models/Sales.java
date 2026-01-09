@@ -67,9 +67,11 @@ public class Sales {
 	@Column
 	private BigDecimal salePrice;
 
-	@Schema(description = "Document (e.g., N78785-000 / B78855-000)", example = "N78785-000")
-	@Column
-	private String document;
+	@Schema(description = "Tipo de venda extraído do campo documento (ex: N)")
+	public String saleType;
+
+	@Schema(description = "CEP do cliente extraído do campo documento (ex: 78600-000)")
+	public String zipCodeCustomer;
 
 	@Schema(description = "Data da integração da venda (AAAAMMDD)")
 	@Column
@@ -104,7 +106,8 @@ public class Sales {
 		this.transactionDate = response.getTransactionDate();
 		this.quantity = response.getQuantity();
 		this.salePrice = response.getSalePrice();
-		this.document = response.getDocument();
+		this.saleType = response.getSaleType();
+		this.zipCodeCustomer = response.getZipCodeCustomer();
 		this.sequence = response.getSequence();
 
 	}
@@ -165,12 +168,20 @@ public class Sales {
 		this.salePrice = salePrice;
 	}
 
-	public String getDocument() {
-		return document;
+	public String getSaleType() {
+		return saleType;
 	}
 
-	public void setDocument(String document) {
-		this.document = document;
+	public void setSaleType(String saleType) {
+		this.saleType = saleType;
+	}
+
+	public String getZipCodeCustomer() {
+		return zipCodeCustomer;
+	}
+
+	public void setZipCodeCustomer(String zipCodeCustomer) {
+		this.zipCodeCustomer = zipCodeCustomer;
 	}
 
 	public Long getId() {

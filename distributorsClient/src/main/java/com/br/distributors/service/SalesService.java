@@ -33,9 +33,9 @@ public class SalesService {
 			"\\s+" + "([0-9]{1,18})" + // 4 ean/codigo
 			"\\s+" + "(\\d+\\.\\d{4})" + // 5 quantidade
 			"(\\d+\\.\\d{6})" + // 6 preco+vendedor (2 casas + 4 vendedor) colados
-			"\\s+" + "([A-Z][0-9A-Z\\-]{3,20})" + // 7 documento
-			"\\s+" + "(\\S+)" + // 8 campo7
-			"\\s+" + "(\\S+)" + // 9 campo8
+			"\\s+" + "([A-Z])([0-9]{5}-[0-9]{3})" + // 7 saleType, 8 zipCodeCustomer
+			"\\s+" + "(\\S+)" + // 9 field7
+			"\\s+" + "(\\S+)" + // 10 field8
 			"\\s*$");
 
 	private final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule())
@@ -233,7 +233,8 @@ public class SalesService {
 		String precoStr = precoVendedor.substring(0, precoVendedor.length() - 4);
 		it.salePrice = new BigDecimal(precoStr);
 
-		it.document = m.group(7);
+		it.saleType = m.group(7);
+		it.zipCodeCustomer = m.group(8);
 		it.field7 = m.group(8);
 		it.field8 = m.group(9);
 

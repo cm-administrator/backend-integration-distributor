@@ -32,8 +32,11 @@ public class Sales {
 	@Schema(description = "Salesperson code (last 4 digits of the price+salesperson field)", example = "4700")
 	public String salespersonCode;
 
-	@Schema(description = "Document (e.g., N78785-000 / B78855-000)", example = "N78785-000")
-	public String document;
+	@Schema(description = "Tipo de venda extraído do campo documento (ex: N)")
+	public String saleType;
+
+	@Schema(description = "CEP do cliente extraído do campo documento (ex: 78600-000)")
+	public String zipCodeCustomer;
 
 	@Schema(description = "Final field 1 (e.g., 00000000)", example = "00000000")
 	public String field7;

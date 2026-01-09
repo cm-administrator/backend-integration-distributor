@@ -34,8 +34,11 @@ public class SalesResponse {
 	@Schema(description = "Salesperson code (last 4 digits of the price+salesperson field)", example = "4700")
 	public String salespersonCode;
 
-	@Schema(description = "Document (e.g., N78785-000 / B78855-000)", example = "N78785-000")
-	public String document;
+	@Schema(description = "Tipo de venda extraído do campo documento (ex: N)")
+	public String saleType;
+
+	@Schema(description = "CEP do cliente extraído do campo documento (ex: 78600-000)")
+	public String zipCodeCustomer;
 
 	public String getDistributorIdentifier() {
 		return distributorIdentifier;
@@ -65,8 +68,12 @@ public class SalesResponse {
 		return salespersonCode;
 	}
 
-	public String getDocument() {
-		return document;
+	public String getSaleType() {
+		return saleType;
+	}
+
+	public String getZipCodeCustomer() {
+		return zipCodeCustomer;
 	}
 
 	public String getSequence() {
