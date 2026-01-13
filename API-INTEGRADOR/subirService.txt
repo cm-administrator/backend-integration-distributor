@@ -1,0 +1,3 @@
+@echo off
+cd C:\Users\Administrador.WIN-83ICR0J7US6\Desktop\API Project WINDOWNS SERVICE
+WinSW.NET4.exe install
